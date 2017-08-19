@@ -24,8 +24,12 @@ public class StockCost {
 	private Label _result1;
 	private Label _result2;
 
-	private int getFee(float stockBuyPrice, float feeDiscountPercentage) {
+	private int getFee(float stockBuyPrice, float feeDiscountPercentage, int lowFee) {
 		int fee = (int)(stockBuyPrice * 1000.0f * 0.001425f * feeDiscountPercentage);
+
+		if (fee < lowFee)
+			return lowFee;
+
 		return fee;
 	}
 
@@ -79,8 +83,8 @@ public class StockCost {
 			float stockBuyPrice = Float.valueOf(_buyPrice.getText());
 			float stockSellPrice = Float.valueOf(_sellPrice.getText());
 
-			int fee1 = getFee(stockBuyPrice, feeDiscountPercentage);
-			int fee2 = getFee(stockSellPrice, feeDiscountPercentage);
+			int fee1 = getFee(stockBuyPrice, feeDiscountPercentage, lowFee);
+			int fee2 = getFee(stockSellPrice, feeDiscountPercentage, lowFee);
 
 			float stockTaxPercetage = 0.0015f;
 			if (_stockTranscationMode.getSelectedIndex() == 1)
