@@ -5,7 +5,10 @@ import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.gui2.*;
 import com.googlecode.lanterna.input.KeyStroke;
+import com.googlecode.lanterna.input.KeyType;
 import com.googlecode.lanterna.TextColor;
+
+import java.util.regex.Pattern;
 
 public class StockCost {
 	ComboBox<String> _stockTranscationMode;
@@ -115,6 +118,15 @@ public class StockCost {
 		}
 	}
 
+	private void terminate(Screen screen, Window window) {
+		try {
+			screen.stopScreen();
+		} catch (Exception e) {
+		}
+
+		window.close();
+	}
+
 	public void handle() {
 		try {
 			final Screen screen = new DefaultTerminalFactory().createScreen();
@@ -123,7 +135,17 @@ public class StockCost {
 			final Window window = new BasicWindow("股票成本計算器");
 			final WindowBasedTextGUI textGUI = new MultiWindowTextGUI(screen);
 
-			Panel contentPanel = new Panel(new GridLayout(2));
+			Panel contentPanel = new Panel(new GridLayout(2)) {
+				@Override
+				public boolean handleInput(KeyStroke key) {
+					Character c = key.getCharacter();
+					if (c != null && c == 'q')
+						terminate(screen, window);
+
+					return false;
+				}
+			};
+
 			GridLayout gridLayout = (GridLayout)contentPanel.getLayoutManager();
 			gridLayout.setHorizontalSpacing(3);
 
@@ -190,7 +212,19 @@ public class StockCost {
 				protected void afterLeaveFocus(FocusChangeDirection direction, Interactable previouslyInFocus) {
 					updateCost();
 				}
+
+				public synchronized Result handleKeyStroke(KeyStroke keyStroke) {
+					Result r = super.handleKeyStroke(keyStroke);
+					Character c = keyStroke.getCharacter();
+					if (c != null && c == 'q')
+						terminate(screen, window);
+
+					return r;
+				}
 			};
+
+			Pattern pattern = Pattern.compile("[0-9]+\\.?[0-9]*");
+			_buyPrice.setValidationPattern(pattern);
 
 			_buyPrice.addTo(contentPanel);
 
@@ -210,8 +244,22 @@ public class StockCost {
 				protected void afterLeaveFocus(FocusChangeDirection direction, Interactable previouslyInFocus) {
 					updateCost();
 				}
+
+				public synchronized Result handleKeyStroke(KeyStroke keyStroke) {
+					Result r = super.handleKeyStroke(keyStroke);
+
+					if (keyStroke.getKeyType() == KeyType.Enter)
+						return Result.MOVE_FOCUS_PREVIOUS;
+
+					Character c = keyStroke.getCharacter();
+					if (c != null && c == 'q')
+						terminate(screen, window);
+
+					return r;
+				}
 			};
 
+			_sellPrice.setValidationPattern(pattern);
 			_sellPrice.addTo(contentPanel);
 
 			contentPanel.addComponent(new Separator(Direction.HORIZONTAL)
